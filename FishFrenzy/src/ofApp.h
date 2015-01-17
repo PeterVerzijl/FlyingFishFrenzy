@@ -40,5 +40,6 @@ class ofApp : public ofBaseApp{
 		vector<ofPtr<ofxBox2dCircle>> circles;
 		vector<ofPtr<ofxBox2dRect>> boxes;
 
-		ofPoint blopPoint;
+		ofPtr<ofxBox2dRect> playerLeft;
+		ofPtr<ofxBox2dRect> playerRight;
 };

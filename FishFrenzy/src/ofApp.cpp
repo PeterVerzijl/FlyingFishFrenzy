@@ -37,13 +37,23 @@ void ofApp::setup(){
 	box2d.setFPS(30.0);					// Set the physics update rate
 
 	// Add two 'hands'
-	ofPtr<ofxBox2dRect> box = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
-	box->setPhysics(3.0, 0.53, 0.1);
-	box->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 120, 50);
-	box->setFixedRotation(true);
-	box->setRotationFriction(1000);
-	box->setRotation(0);
-	boxes.push_back(box);
+	// Player left
+	playerLeft = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
+	playerLeft->setPhysics(3.0, 0.53, 0.1);
+	playerLeft->setup(box2d.getWorld(), ofGetWidth() * 0.25f, ofGetHeight() * 0.5f, 120, 50);
+	playerLeft->setFixedRotation(true);
+	playerLeft->setRotationFriction(1000);
+	playerLeft->setRotation(0);
+	boxes.push_back(playerLeft);
+
+	// Player right
+	playerRight = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
+	playerRight->setPhysics(3.0, 0.53, 0.1);
+	playerRight->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 120, 50);
+	playerRight->setFixedRotation(true);
+	playerRight->setRotationFriction(1000);
+	playerRight->setRotation(0);
+	boxes.push_back(playerRight);
 	
 	for (int i = 0; i < 15; i++)
 	{
@@ -85,14 +95,21 @@ void ofApp::update(){
 	// Now we have the blobs from findContours, iterate trough them
 	if (contourFinder.nBlobs > 0 && boxes.size() > 0) {
 		ofxCvBlob blob = contourFinder.blobs.at(0);
-		ofxBox2dRect *box = boxes.front().get();
-
 		ofVec2f blobPos = ofVec2f(blob.centroid.x, blob.centroid.y);
-		float distance = box->getPosition().distance(blobPos);
-		ofVec2f force = (blobPos - box->getPosition()).normalized();
-		box->setVelocity(force * 0.1f * distance);
-
-		box->setRotation(0);
+		
+		if (blobPos.x < ofGetWidth() * 0.5f) {
+			float distance = playerLeft->getPosition().distance(blobPos);
+			ofVec2f force = (blobPos - playerLeft->getPosition()).normalized();
+			playerLeft->setVelocity(force * 0.1f * distance);
+			playerLeft->setRotation(0);
+		}
+		else
+		{
+			float distance = playerRight->getPosition().distance(blobPos);
+			ofVec2f force = (blobPos - playerRight->getPosition()).normalized();
+			playerRight->setVelocity(force * 0.1f * distance);
+			playerRight->setRotation(0);
+		}
 	}
 
 	// Update movement of boxes
@@ -121,10 +138,16 @@ void ofApp::draw(){
 	grayImage.draw(0, 0, grayImage.width, grayImage.height);		// Draw threshold image
 	contourFinder.draw(0, 0, grayImage.width, grayImage.height);	// Draw the found contours
 
+	// Draw players
+	ofFill();
+	ofSetColor(0, 0, 255);
+	playerLeft->draw();
+	ofSetColor(255, 0, 0);
+	playerRight->draw();
+
 	// Draw box2D
-	for (int i=0; i<boxes.size(); i++) {
-		ofFill();
-		ofSetHexColor(0xBF2545);
+	ofSetColor(0, 255, 0);
+	for (int i=2; i<boxes.size(); i++) {
 		boxes[i].get()->draw();
 	}
 
