@@ -4,6 +4,7 @@
 #include "ofxOpenCv.h"
 #include "ofxKinect.h"
 #include "ofxBox2d.h"
+#include "c:\users\user\of_v0.8.4_vs_release\apps\myapps\fishfrenzy\src\flock\ofxFlocking.h"
 
 class ofApp : public ofBaseApp{
 
@@ -37,9 +38,11 @@ class ofApp : public ofBaseApp{
 
 		// Box2D parameters
 		ofxBox2d box2d;
-		vector<ofPtr<ofxBox2dCircle>> circles;
-		vector<ofPtr<ofxBox2dRect>> boxes;
 
-		ofPtr<ofxBox2dRect> playerLeft;
-		ofPtr<ofxBox2dRect> playerRight;
+		ofxFlocking flock;
+		
+		//vector<ofPtr<ofxBox2dRect>> boxes;
+
+		ofPtr<Boid> playerLeft;
+		ofPtr<Boid> playerRight;
 };

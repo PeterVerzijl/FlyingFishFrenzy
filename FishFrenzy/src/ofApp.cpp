@@ -1,4 +1,6 @@
 #include "ofApp.h"
+#include "flock\FishOne.h"
+#include "flock\FishTwo.h"
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -37,29 +39,30 @@ void ofApp::setup(){
 	box2d.setFPS(30.0);					// Set the physics update rate
 
 	// Add two 'hands'
+		
 	// Player left
-	playerLeft = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
+	playerLeft = ofPtr<Boid>(new Boid);
 	playerLeft->setPhysics(3.0, 0.53, 0.1);
 	playerLeft->setup(box2d.getWorld(), ofGetWidth() * 0.25f, ofGetHeight() * 0.5f, 120, 50);
 	playerLeft->setFixedRotation(true);
 	playerLeft->setRotationFriction(1000);
 	playerLeft->setRotation(0);
-	boxes.push_back(playerLeft);
+	flock.boids.push_back(playerLeft);
 
 	// Player right
-	playerRight = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
+	playerRight = ofPtr<Boid>(new Boid);
 	playerRight->setPhysics(3.0, 0.53, 0.1);
 	playerRight->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 120, 50);
 	playerRight->setFixedRotation(true);
 	playerRight->setRotationFriction(1000);
 	playerRight->setRotation(0);
-	boxes.push_back(playerRight);
+	flock.boids.push_back(playerRight);
 	
-	for (int i = 0; i < 15; i++)
+	for (int i = 0; i < 60; i++)
 	{
-		boxes.push_back(ofPtr<ofxBox2dRect>(new ofxBox2dRect));
-		boxes.back().get()->setPhysics(3.0, 0.53, 0.1);
-		boxes.back().get()->setup(box2d.getWorld(), ofRandomWidth(), 50, 50, 50);
+		flock.boids.push_back(ofPtr<FishOne>(new FishOne));
+		flock.boids.back().get()->setPhysics(3.0, 0.53, 0.1);
+		flock.boids.back().get()->setup(box2d.getWorld(), ofRandomWidth(), 50, 20, 20);
 	}
 
 	ofSetFrameRate(60);					// Try to keep the display framerate at 60fps
@@ -93,11 +96,12 @@ void ofApp::update(){
 	}
 
 	// Now we have the blobs from findContours, iterate trough them
-	if (contourFinder.nBlobs > 0 && boxes.size() > 0) {
+	if (contourFinder.nBlobs > 0 && flock.boids.size() > 0) {
 		ofxCvBlob blob = contourFinder.blobs.at(0);
 		ofVec2f blobPos = ofVec2f(blob.centroid.x, blob.centroid.y);
 		
-		if (blobPos.x < ofGetWidth() * 0.5f) {
+		if (blobPos.x < ofGetWidth() * 0.5f) 
+		{
 			float distance = playerLeft->getPosition().distance(blobPos);
 			ofVec2f force = (blobPos - playerLeft->getPosition()).normalized();
 			playerLeft->setVelocity(force * 0.1f * distance);
@@ -113,16 +117,17 @@ void ofApp::update(){
 	}
 
 	// Update movement of boxes
-	for (int i=0; i<boxes.size(); i++) 
+	for (int i=0; i<flock.boids.size(); i++) 
 	{
-		ofxBox2dRect *box = boxes[i].get();
-		if (box->getPosition().y < ofGetHeight() * 0.5f)
+		ofPtr<ofxBox2dRect> boid = flock.boids.at(i);
+		boid->update();
+		if (boid->getPosition().y < ofGetHeight() * 0.5f)
 		{
-			box->addForce(ofVec2f(0, 30), 1.0f);
+			boid->addForce(ofVec2f(0, 30), 1.0f);
 		}
 		else
 		{
-			box->friction = 10.0f;
+			boid->friction = 10.0f;
 		}
 	}
 
@@ -146,9 +151,9 @@ void ofApp::draw(){
 	playerRight->draw();
 
 	// Draw box2D
-	ofSetColor(0, 255, 0);
-	for (int i=2; i<boxes.size(); i++) {
-		boxes[i].get()->draw();
+	ofSetColor(255, 255, 255);
+	for (int i = 2; i < flock.boids.size(); i++) {
+		flock.boids.at(i)->draw();
 	}
 
 	// Draw water
@@ -168,7 +173,7 @@ void ofApp::exit() {
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-	
+
 }
 
 //--------------------------------------------------------------
@@ -188,6 +193,7 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
+
 
 }
 
