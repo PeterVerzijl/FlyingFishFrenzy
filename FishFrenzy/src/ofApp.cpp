@@ -1,32 +1,30 @@
+///////////////////////////////////////////////////////
+///// Programming with Structures Module 6 CreaTe /////
+/////  Created by Peter Verzijl and Gege Zhang    /////
+/////                  2015                       /////
+///////////////////////////////////////////////////////
+
 #include "ofApp.h"
-#include "flock\FishOne.h"
-#include "flock\FishTwo.h"
 
 //--------------------------------------------------------------
 void ofApp::setup(){
 
-	ofSetVerticalSync(true);			// Set graphics stuff
-	ofSetLogLevel(OF_LOG_NOTICE);		// Debug level
+	ofSetVerticalSync(true);			// Set graphics so it runs smoothly
+//	ofSetLogLevel(OF_LOG_NOTICE);		// Debug level
 
 	kinect.setRegistration(true);		// Registrate depth checking
 
 	kinect.init(false, false);			// Disables video image (faster fps)
 	kinect.open();						// Opens first available kinect
 
-	kinectAngle = 0;					// Level kinect at startup
+	kinectAngle = 10;					// Level kinect at startup
 	kinect.setCameraTiltAngle(kinectAngle);
-
-	// Debug kinect startup messages
-	if (kinect.isConnected()) 
-	{
-		ofLogNotice() << "sensor-emitter dist: " << kinect.getSensorEmitterDistance() << "cm";
-		ofLogNotice() << "sensor-camera dist:  " << kinect.getSensorCameraDistance() << "cm";
-		ofLogNotice() << "zero plane pixel size: " << kinect.getZeroPlanePixelSize() << "mm";
-		ofLogNotice() << "zero plane dist: " << kinect.getZeroPlaneDistance() << "mm";
-	}
 
 	// Populate and init image with correct image size
 	grayImage.allocate(kinect.width, kinect.height);
+
+	// Load sound
+	explode.loadSound("explosion.wav");
 
 	useThreshold = true;				// Tell openCV to use threshold values
 	nearThreshold = 255;				// Check as near as possible
@@ -34,36 +32,52 @@ void ofApp::setup(){
 
 	// Set box2d parameters
 	box2d.init();
-	box2d.setGravity(0, 0);				// Set a vector2 for the gravity
+	box2d.setGravity(0, 0);				// Set a vector2 for the gravity to 0 initially
 	box2d.createBounds();				// Create the bounds of the box2d world
 	box2d.setFPS(30.0);					// Set the physics update rate
 
 	// Add two 'hands'
 		
 	// Player left
-	playerLeft = ofPtr<Boid>(new Boid);
+	playerLeft = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
 	playerLeft->setPhysics(3.0, 0.53, 0.1);
 	playerLeft->setup(box2d.getWorld(), ofGetWidth() * 0.25f, ofGetHeight() * 0.5f, 120, 50);
 	playerLeft->setFixedRotation(true);
-	playerLeft->setRotationFriction(1000);
-	playerLeft->setRotation(0);
-	flock.boids.push_back(playerLeft);
 
 	// Player right
-	playerRight = ofPtr<Boid>(new Boid);
+	playerRight = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
 	playerRight->setPhysics(3.0, 0.53, 0.1);
 	playerRight->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 120, 50);
 	playerRight->setFixedRotation(true);
-	playerRight->setRotationFriction(1000);
-	playerRight->setRotation(0);
-	flock.boids.push_back(playerRight);
 	
-	for (int i = 0; i < 60; i++)
+
+	//generating new fishes (20) for both players
+	for (int i = 0; i < 20; i++)
 	{
-		flock.boids.push_back(ofPtr<FishOne>(new FishOne));
-		flock.boids.back().get()->setPhysics(3.0, 0.53, 0.1);
-		flock.boids.back().get()->setup(box2d.getWorld(), ofRandomWidth(), 50, 20, 20);
+		ofPtr<FishOne> fish1 = ofPtr<FishOne>(new FishOne);
+		fish1->setPhysics(3.0, 0.53, 0.1);
+		fish1->setup(box2d.getWorld(), ofRandomWidth(), 50, fish1->size.x, fish1->size.y);
+		fishOneList.push_back(fish1);
+
+		ofPtr<FishTwo> fish2 = ofPtr<FishTwo>(new FishTwo);
+		fish2->setPhysics(3.0, 0.53, 0.1);
+		fish2->setup(box2d.getWorld(), ofRandomWidth(), 50, fish2->size.x, fish2->size.y);
+		fishTwoList.push_back(fish2);
 	}
+
+	// Fight font
+	fightFont.loadFont("FightFont.ttf", 20, false, false, false, 1.0);
+	
+	// Load background image
+	background.loadImage("Background.png");
+	
+	// Gore images
+	fishOneGore1.loadImage("FishPiece3.png");;
+	fishOneGore2.loadImage("FishPiece4.png");;
+	fishOneGore3.loadImage("FishPiece5.png");
+	fishTwoGore1.loadImage("FishPiece1.png");
+	fishTwoGore2.loadImage("FishPiece2.png");
+	fishBones.loadImage("Fishbone.png");
 
 	ofSetFrameRate(60);					// Try to keep the display framerate at 60fps
 }
@@ -96,8 +110,9 @@ void ofApp::update(){
 	}
 
 	// Now we have the blobs from findContours, iterate trough them
-	if (contourFinder.nBlobs > 0 && flock.boids.size() > 0) {
-		ofxCvBlob blob = contourFinder.blobs.at(0);
+	for (int i = 0; i < contourFinder.blobs.size(); i++) 
+	{
+		ofxCvBlob blob = contourFinder.blobs.at(i);
 		ofVec2f blobPos = ofVec2f(blob.centroid.x, blob.centroid.y);
 		
 		if (blobPos.x < ofGetWidth() * 0.5f) 
@@ -105,29 +120,116 @@ void ofApp::update(){
 			float distance = playerLeft->getPosition().distance(blobPos);
 			ofVec2f force = (blobPos - playerLeft->getPosition()).normalized();
 			playerLeft->setVelocity(force * 0.1f * distance);
-			playerLeft->setRotation(0);
+			playerOnePos = blobPos;
 		}
 		else
 		{
 			float distance = playerRight->getPosition().distance(blobPos);
 			ofVec2f force = (blobPos - playerRight->getPosition()).normalized();
 			playerRight->setVelocity(force * 0.1f * distance);
-			playerRight->setRotation(0);
+			playerTwoPos = blobPos;
 		}
 	}
 
-	// Update movement of boxes
-	for (int i=0; i<flock.boids.size(); i++) 
+	// Update movement of fishes 1
+	for (int i = 0; i < fishOneList.size(); i++) 
 	{
-		ofPtr<ofxBox2dRect> boid = flock.boids.at(i);
-		boid->update();
+		ofPtr<Boid> boid = fishOneList.at(i);
+		
+		boid->avoid(playerTwoPos);
+		boid->seek(playerOnePos);
+		boid->updateBoid(fishOneList);
+		
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
 		{
-			boid->addForce(ofVec2f(0, 30), 1.0f);
+			boid->addForce(ofVec2f(0, 1), 50.0f);
+			boid->UpdateLife();									// run update life (lifespan --)
 		}
 		else
 		{
+			boid->addForce(ofVec2f(0, 1), 8.0f);
+			boid->age = 0;
 			boid->friction = 10.0f;
+		}
+
+		if (boid->isDead)
+		{
+			fishOneList.erase(fishOneList.begin() + i);				// erase that fish
+			explode.play();
+
+			// Create particle system
+			ofPtr<ParticleSystem> ps = ofPtr<ParticleSystem>(new ParticleSystem);			// Create new particle system
+			ofPtr<Particle> p;									// Create 20 new particles
+			for (int i = 0; i < 20; i++)
+			{
+				p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y));
+				ps->particles.push_back(p);						// Add to the list
+			}
+			// Add gore
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishOneGore1));
+			ps->particles.push_back(p);
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishOneGore2));
+			ps->particles.push_back(p);
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishOneGore3));
+			ps->particles.push_back(p);
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishBones));
+			ps->particles.push_back(p);
+
+			ps->emit();
+			particleSystems.push_back(ps);						// Add particle sytem to our ps list
+
+			// Do screenshake
+			screenShakeDuration = 10;
+		}
+	}
+
+	// Update movement of fishes 2
+	for (int i = 0; i < fishTwoList.size(); i++) 
+	{
+		ofPtr<Boid> boid = fishTwoList.at(i);
+
+		boid->avoid(playerOnePos);
+		boid->seek(playerTwoPos);
+		boid->updateBoid(fishTwoList);
+		
+		if (boid->getPosition().y < ofGetHeight() * 0.5f)
+		{
+			boid->addForce(ofVec2f(0, 1), 50.0f);
+			boid->UpdateLife();									// run update life (lifespan --)
+		}
+		else
+		{
+			boid->addForce(ofVec2f(0, 1), 8.0f);
+			boid->age = 0;
+			boid->friction = 10.0f;
+		}
+
+		if (boid->isDead)
+		{
+			fishTwoList.erase(fishTwoList.begin() + i);				// erase that fish
+			explode.play();
+
+			// Create particle system
+			ofPtr<ParticleSystem> ps = ofPtr<ParticleSystem>(new ParticleSystem);			// Create new particle system
+			ofPtr<Particle> p;									// Create 20 new particles
+			for (int i = 0; i < 20; i++)
+			{
+				p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y));
+				ps->particles.push_back(p);						// Add to the list
+			}
+			// Add gore
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishTwoGore1));
+			ps->particles.push_back(p);
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishTwoGore2));
+			ps->particles.push_back(p);
+			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishBones));
+			ps->particles.push_back(p);
+
+			ps->emit();
+			particleSystems.push_back(ps);						// Add particle sytem to our ps list
+
+			// Do screenshake
+			screenShakeDuration = 10;
 		}
 	}
 
@@ -138,81 +240,130 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
 
-	ofSetColor(150);										// Set default background color a nice shade of gray
+	ofPushMatrix();
+		// Screenshake
+		if (screenShakeDuration > 0)
+		{
+			screenShakeDuration--;
+			ofTranslate(ofPoint(ofRandom(-1, 1), ofRandom(-1, 1)) * 10 );
+		}
+		else 
+		{
+			ofTranslate(0, 0);
+		}
 
-	grayImage.draw(0, 0, grayImage.width, grayImage.height);		// Draw threshold image
+		ofSetColor(255);
+		background.draw(0, 0, ofGetWidth(), ofGetHeight());
+
+		// ofSetColor(150, 50);											// Set default background color a nice shade of gray
+		// grayImage.draw(0, 0, grayImage.width, grayImage.height);		// Draw threshold image
+
+		// Draw players
+		ofFill();
+		ofSetColor(0, 0, 255);
+		playerLeft->draw();
+		ofSetColor(255, 0, 0);
+		playerRight->draw();
+
+		// Draw box2D
+		ofSetColor(255, 255, 255);
+		for (int i = 2; i < fishOneList.size(); i++) 
+		{
+			fishOneList.at(i)->draw();
+		}
+		for (int i = 2; i < fishTwoList.size(); i++) 
+		{
+			fishTwoList.at(i)->draw();
+		}
+
+		// Draw particles
+		for (ofPtr<ParticleSystem> ps : particleSystems) 
+		{
+			ps->update();
+		}
+		
+		// Draw water
+		fishKilled = (float)(((float)fishOneList.size() + (float)fishTwoList.size()) / 40.0f) * 255;
+		cout << fishKilled << endl;
+		ofSetColor(255 - fishKilled, 0, fishKilled, 150); 
+		ofRect(0, ofGetHeight() * 0.5f, ofGetWidth(), ofGetHeight() * 0.5f);
+
+		ofNoFill();
+		ofRect(100, 100, ofGetWidth() - 200, ofGetHeight() - 200);
+
+	ofPopMatrix();
+
 	contourFinder.draw(0, 0, grayImage.width, grayImage.height);	// Draw the found contours
 
-	// Draw players
-	ofFill();
-	ofSetColor(0, 0, 255);
-	playerLeft->draw();
-	ofSetColor(255, 0, 0);
-	playerRight->draw();
-
-	// Draw box2D
-	ofSetColor(255, 255, 255);
-	for (int i = 2; i < flock.boids.size(); i++) {
-		flock.boids.at(i)->draw();
-	}
-
-	// Draw water
-	ofSetColor(0, 0, 255, 150); 
-	ofRect(0, ofGetHeight() * 0.5f, ofGetWidth(), ofGetHeight() * 0.5f);
-
-	// draw the ground
-	box2d.drawGround();
+	// UI counters
+	ofDrawBitmapString(ofToString(ofGetFrameRate())+"fps", 10,15);
+	
+	ofSetColor(255, 255, 0);
+	ostringstream p1text;
+	p1text << "Player 1: " << fishOneList.size() << " / 20";
+	ostringstream p2text;
+	p2text << "Player 2: " << fishTwoList.size() << " / 20";
+	fightFont.drawString(p1text.str(), ofGetWidth()*0.1f, 100);
+	fightFont.drawString(p2text.str(), ofGetWidth()*0.6f, 100);
 }
 
 //--------------------------------------------------------------
-void ofApp::exit() {
-
+void ofApp::exit() 
+{
 	kinect.setCameraTiltAngle(0); // zero the tilt on exit
 	kinect.close();
 }
 
 //--------------------------------------------------------------
-void ofApp::keyPressed(int key){
+void ofApp::keyPressed(int key)
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::keyReleased(int key){
+void ofApp::keyReleased(int key)
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
+void ofApp::mouseMoved(int x, int y )
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
+void ofApp::mouseDragged(int x, int y, int button)
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
+void ofApp::mousePressed(int x, int y, int button)
+{
+	
+}
 
+//--------------------------------------------------------------
+void ofApp::mouseReleased(int x, int y, int button)
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
+void ofApp::windowResized(int w, int h)
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
+void ofApp::gotMessage(ofMessage msg)
+{
 
 }
 
 //--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
+void ofApp::dragEvent(ofDragInfo dragInfo)
+{ 
 
 }

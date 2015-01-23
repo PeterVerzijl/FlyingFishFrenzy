@@ -4,7 +4,12 @@
 #include "ofxOpenCv.h"
 #include "ofxKinect.h"
 #include "ofxBox2d.h"
-#include "c:\users\user\of_v0.8.4_vs_release\apps\myapps\fishfrenzy\src\flock\ofxFlocking.h"
+
+#include "flock\Boid.h"
+#include "flock\FishOne.h"
+#include "flock\FishTwo.h"
+
+#include "particleSystem\ParticleSystem.h"
 
 class ofApp : public ofBaseApp{
 
@@ -35,14 +40,33 @@ class ofApp : public ofBaseApp{
 		bool useThreshold;
 		int nearThreshold;
 		int farThreshold;
+		ofSoundPlayer explode;
 
 		// Box2D parameters
 		ofxBox2d box2d;
-
-		ofxFlocking flock;
 		
-		//vector<ofPtr<ofxBox2dRect>> boxes;
+		vector<ofPtr<Boid>> fishOneList;
+		vector<ofPtr<Boid>> fishTwoList;
+		
+		ofPtr<ofxBox2dRect> playerLeft;
+		ofPtr<ofxBox2dRect> playerRight;
 
-		ofPtr<Boid> playerLeft;
-		ofPtr<Boid> playerRight;
+		ofVec2f playerOnePos;
+		ofVec2f playerTwoPos;
+
+		vector<ofPtr<ParticleSystem>> particleSystems;
+
+		int screenShakeDuration;	// In frames
+
+		ofTrueTypeFont fightFont;
+
+		ofImage background;
+		ofImage fishOneGore1;
+		ofImage fishOneGore2;
+		ofImage fishOneGore3;
+		ofImage fishTwoGore1;
+		ofImage fishTwoGore2;
+		ofImage fishBones;
+
+		int fishKilled;
 };

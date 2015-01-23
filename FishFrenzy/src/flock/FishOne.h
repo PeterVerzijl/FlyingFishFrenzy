@@ -1,5 +1,5 @@
 #pragma once
-#include "c:\users\user\of_v0.8.4_vs_release\apps\myapps\fishfrenzy\src\flock\boid.h"
+#include "boid.h"
 class FishOne : public Boid
 {
 public:
@@ -13,6 +13,8 @@ public:
 	ofImage image;
 
 	void draw();
+
+	int life;
 
 protected:
 private:
