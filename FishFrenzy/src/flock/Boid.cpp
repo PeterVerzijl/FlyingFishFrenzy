@@ -1,6 +1,3 @@
-
-
-#include "..\ofApp.h"
 #include "boid.h"
 
 // Definition of the superclass Boid constructor
@@ -42,21 +39,25 @@ void Boid::updateBoid(vector<ofPtr<Boid>> boids)
 	ofxBox2dRect::update();
 
 	flock(boids);									// Flock with the boyds and update acceleration and velocity
-
-	addForce(acc, 1);								// Set Box2D velocity
 	
-	// Screen warping
-	if (getPosition().x + 100 > ofGetScreenWidth())
+	// Screen edge avoiding
+	if (getPosition().x > (ofGetWidth() - 100))
 	{
-		addForce(ofVec2f(-1, 0), 50);
+		acc += ofVec2f(-1, 0) * 3.0f;
 	}
 	if (getPosition().x < 100)
 	{
-		addForce(ofVec2f(1, 0), 50);
+		acc += ofVec2f(1, 0) * 3.0f;
 	}
-	if (getPosition().y + 100 > ofGetScreenHeight())
+	if (getPosition().y > (ofGetHeight() - 100))
 	{
-		addForce(ofVec2f(0, 1), 50);
+		acc += ofVec2f(0, -1) * 12.0f;
+	}
+
+	// Avoid surface
+	if (getPosition().y > (ofGetHeight() * 0.5f) || getPosition().y < (ofGetHeight() * 0.5f - 100))
+	{
+		acc += ofVec2f(0, 1) * 12.0f;
 	}
 
 	if (getPosition().y > ofGetScreenHeight() || getPosition().y < 0 
@@ -64,6 +65,11 @@ void Boid::updateBoid(vector<ofPtr<Boid>> boids)
 	{
 		setPosition(ofVec2f(ofGetScreenWidth()*0.5f, ofGetScreenHeight()*0.5f));
 	}
+
+	addForce(acc, 1);								// Set Box2D velocity
+	
+	// Set acceleration to zero
+	acc.set(0, 0);
 
 	// Note: We don't have to set constraints for the flocking since Box2D world does that for us.
 }
@@ -136,9 +142,9 @@ void Boid::flock(vector<ofPtr<Boid>> boids)
     ofVec2f coh = cohesion(boids);
 
     // Arbitrarily weight of the forces
-    sep *= 0.5f;
-    ali *= 0.5f;
-    coh *= 0.5f;
+    sep *= 100.0f;
+    ali *= 100.0f;
+    coh *= 100.0f;
 
     acc += sep + ali + coh;     // acceleration value
 }
@@ -147,7 +153,7 @@ void Boid::flock(vector<ofPtr<Boid>> boids)
 //the method checks for nearby Boid boids and steers away to avoid local crowding of the flockmates
 ofVec2f Boid::separate(vector<ofPtr<Boid>> boids)
 {
-    float desiredseparation = 100;
+    float desiredseparation = 30;
     ofVec2f steer;
     int count = 0;
 
@@ -191,7 +197,7 @@ ofVec2f Boid::separate(vector<ofPtr<Boid>> boids)
 // steers towards the avarage direction on the nearby flockmates
 ofVec2f Boid::align(vector<ofPtr<Boid>> boids)
 {
-    float neighbordist = 50.0;
+    float neighbordist = 100.0;
     ofVec2f steer;
     int count = 0;
     for (int i = 0 ; i < boids.size(); i++)
@@ -228,7 +234,7 @@ ofVec2f Boid::align(vector<ofPtr<Boid>> boids)
 //the method calculates the steering vector towards the average location of all nearby Boid boids
 ofVec2f Boid::cohesion(vector<ofPtr<Boid>> boids)
 {
-    float neighbordist = 50.0;
+    float neighbordist = 100.0;
     ofVec2f sum;   // Start with empty vector to accumulate all locations
     int count = 0;
     for (int i = 0 ; i < boids.size(); i++)

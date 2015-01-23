@@ -56,12 +56,12 @@ void ofApp::setup(){
 	{
 		ofPtr<FishOne> fish1 = ofPtr<FishOne>(new FishOne);
 		fish1->setPhysics(3.0, 0.53, 0.1);
-		fish1->setup(box2d.getWorld(), ofRandomWidth(), 50, fish1->size.x, fish1->size.y);
+		fish1->setup(box2d.getWorld(), ofRandomWidth(), ofGetHeight() * 0.75f, fish1->size.x, fish1->size.y);
 		fishOneList.push_back(fish1);
 
 		ofPtr<FishTwo> fish2 = ofPtr<FishTwo>(new FishTwo);
 		fish2->setPhysics(3.0, 0.53, 0.1);
-		fish2->setup(box2d.getWorld(), ofRandomWidth(), 50, fish2->size.x, fish2->size.y);
+		fish2->setup(box2d.getWorld(), ofRandomWidth(), ofGetHeight() * 0.75f, fish2->size.x, fish2->size.y);
 		fishTwoList.push_back(fish2);
 	}
 
@@ -142,14 +142,13 @@ void ofApp::update(){
 		
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
 		{
-			boid->addForce(ofVec2f(0, 1), 50.0f);
+			boid->acc += ofVec2f(0, 1) * 50.0f;
 			boid->UpdateLife();									// run update life (lifespan --)
 		}
 		else
 		{
-			boid->addForce(ofVec2f(0, 1), 8.0f);
 			boid->age = 0;
-			boid->friction = 10.0f;
+			boid->friction = 5.0f;
 		}
 
 		if (boid->isDead)
@@ -194,12 +193,11 @@ void ofApp::update(){
 		
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
 		{
-			boid->addForce(ofVec2f(0, 1), 50.0f);
+			boid->acc += ofVec2f(0, 1) * 50.0f;
 			boid->UpdateLife();									// run update life (lifespan --)
 		}
 		else
 		{
-			boid->addForce(ofVec2f(0, 1), 8.0f);
 			boid->age = 0;
 			boid->friction = 10.0f;
 		}
@@ -284,7 +282,6 @@ void ofApp::draw(){
 		
 		// Draw water
 		fishKilled = (float)(((float)fishOneList.size() + (float)fishTwoList.size()) / 40.0f) * 255;
-		cout << fishKilled << endl;
 		ofSetColor(255 - fishKilled, 0, fishKilled, 150); 
 		ofRect(0, ofGetHeight() * 0.5f, ofGetWidth(), ofGetHeight() * 0.5f);
 
@@ -353,7 +350,8 @@ void ofApp::mouseReleased(int x, int y, int button)
 //--------------------------------------------------------------
 void ofApp::windowResized(int w, int h)
 {
-
+	box2d.createBounds(0, 0, w, h);				// Create the bounds of the box2d world
+	box2d.checkBounds(true);
 }
 
 //--------------------------------------------------------------
