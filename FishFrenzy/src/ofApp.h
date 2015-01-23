@@ -41,6 +41,8 @@ class ofApp : public ofBaseApp{
 		int nearThreshold;
 		int farThreshold;
 		ofSoundPlayer explode;
+		ofSoundPlayer soundtrack;
+		ofSoundPlayer naturesounds;
 
 		// Box2D parameters
 		ofxBox2d box2d;

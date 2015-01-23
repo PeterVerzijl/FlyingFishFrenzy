@@ -11,7 +11,7 @@ Particle::Particle()
 	maxspeed = 10.0f;
 	angle = 0.0f;
 
-	life = 60 * 1;
+	life = 60 * 5;
 	dead = false;
 }
 
@@ -26,7 +26,7 @@ Particle::Particle(int x, int y)
 	maxspeed = 10.0f;
 	angle = 0.0f;
 
-	life = 255;
+	life = 60 * 5;
 	dead = false;
 }
 

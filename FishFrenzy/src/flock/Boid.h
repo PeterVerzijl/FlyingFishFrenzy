@@ -16,8 +16,8 @@ public:
     //methods
     void updateBoid(vector<ofPtr<Boid>> boids);         //updates the postion of the Boid boids
     void draw();                                    //draws the boids
-    void seek(ofVec2f target);                      //function for searching the other Boid boids target
-    void avoid(ofVec2f target);                     //function for avoiding an enemy
+    void seek(ofVec2f target, float force);                      //function for searching the other Boid boids target
+    void avoid(ofVec2f target, float force);                     //function for avoiding an enemy
     void arrive(ofVec2f target);                    //function for arrival to the target
 
     void flock(vector<ofPtr<Boid>> boids);          //function for flocking

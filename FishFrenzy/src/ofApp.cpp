@@ -25,6 +25,11 @@ void ofApp::setup(){
 
 	// Load sound
 	explode.loadSound("explosion.wav");
+	soundtrack.loadSound("soundtrack.mp3");
+	naturesounds.loadSound("naturesound.wav");
+	soundtrack.play();
+	naturesounds.play();
+
 
 	useThreshold = true;				// Tell openCV to use threshold values
 	nearThreshold = 255;				// Check as near as possible
@@ -40,28 +45,32 @@ void ofApp::setup(){
 		
 	// Player left
 	playerLeft = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
-	playerLeft->setPhysics(3.0, 0.53, 0.1);
+	playerLeft->setPhysics(3.0, 0.53, 0);
 	playerLeft->setup(box2d.getWorld(), ofGetWidth() * 0.25f, ofGetHeight() * 0.5f, 120, 50);
 	playerLeft->setFixedRotation(true);
+	playerLeft->fixture.filter.groupIndex = 1;													// Fixture collision mask
 
 	// Player right
 	playerRight = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
 	playerRight->setPhysics(3.0, 0.53, 0.1);
 	playerRight->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 120, 50);
 	playerRight->setFixedRotation(true);
+	playerRight->fixture.filter.groupIndex = 1;													// Fixture collision mask
+	b2Filter filter;
 	
-
 	//generating new fishes (20) for both players
 	for (int i = 0; i < 20; i++)
 	{
-		ofPtr<FishOne> fish1 = ofPtr<FishOne>(new FishOne);
+		ofPtr<FishOne> fish1 = ofPtr<FishOne>(new FishOne(0, 0));
 		fish1->setPhysics(3.0, 0.53, 0.1);
 		fish1->setup(box2d.getWorld(), ofRandomWidth(), ofGetHeight() * 0.75f, fish1->size.x, fish1->size.y);
+		fish1->fixture.filter.groupIndex = -1;
 		fishOneList.push_back(fish1);
 
-		ofPtr<FishTwo> fish2 = ofPtr<FishTwo>(new FishTwo);
+		ofPtr<FishTwo> fish2 = ofPtr<FishTwo>(new FishTwo(0, 0));
 		fish2->setPhysics(3.0, 0.53, 0.1);
 		fish2->setup(box2d.getWorld(), ofRandomWidth(), ofGetHeight() * 0.75f, fish2->size.x, fish2->size.y);
+		fish2->fixture.filter.groupIndex = -1;
 		fishTwoList.push_back(fish2);
 	}
 
@@ -136,8 +145,8 @@ void ofApp::update(){
 	{
 		ofPtr<Boid> boid = fishOneList.at(i);
 		
-		boid->avoid(playerTwoPos);
-		boid->seek(playerOnePos);
+		boid->avoid(playerTwoPos, 5.0f);
+		boid->seek(playerOnePos, 5.0f);
 		boid->updateBoid(fishOneList);
 		
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
@@ -148,7 +157,7 @@ void ofApp::update(){
 		else
 		{
 			boid->age = 0;
-			boid->friction = 5.0f;
+			boid->friction = 0;
 		}
 
 		if (boid->isDead)
@@ -187,8 +196,8 @@ void ofApp::update(){
 	{
 		ofPtr<Boid> boid = fishTwoList.at(i);
 
-		boid->avoid(playerOnePos);
-		boid->seek(playerTwoPos);
+		boid->avoid(playerOnePos, 5.0f);
+		boid->seek(playerTwoPos, 5.0f);
 		boid->updateBoid(fishTwoList);
 		
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
@@ -199,7 +208,7 @@ void ofApp::update(){
 		else
 		{
 			boid->age = 0;
-			boid->friction = 10.0f;
+			boid->friction = 0;
 		}
 
 		if (boid->isDead)
@@ -265,11 +274,11 @@ void ofApp::draw(){
 
 		// Draw box2D
 		ofSetColor(255, 255, 255);
-		for (int i = 2; i < fishOneList.size(); i++) 
+		for (int i = 0; i < fishOneList.size(); i++) 
 		{
 			fishOneList.at(i)->draw();
 		}
-		for (int i = 2; i < fishTwoList.size(); i++) 
+		for (int i = 0; i < fishTwoList.size(); i++) 
 		{
 			fishTwoList.at(i)->draw();
 		}
@@ -302,6 +311,17 @@ void ofApp::draw(){
 	p2text << "Player 2: " << fishTwoList.size() << " / 20";
 	fightFont.drawString(p1text.str(), ofGetWidth()*0.1f, 100);
 	fightFont.drawString(p2text.str(), ofGetWidth()*0.6f, 100);
+
+	if (fishTwoList.size() <= 0) {
+		ostringstream text;
+		text << "Player one is a weaner!" << endl;
+		fightFont.drawString(text.str(), ofGetWidth() * 0.3f, ofGetHeight() * 0.5f);
+	} 
+	else if (fishOneList.size() <= 0) {
+		ostringstream text;
+		text << "Player two is a weaner!" << endl;
+		fightFont.drawString(text.str(), ofGetWidth() * 0.3f, ofGetHeight() * 0.5f);
+	}
 }
 
 //--------------------------------------------------------------

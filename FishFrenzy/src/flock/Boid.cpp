@@ -5,14 +5,12 @@ Boid::Boid()
 {
     setPosition(ofRandomWidth(),ofRandomHeight());  // sets starting random location
     acc.set(0,0);
-    maxspeed = 4;
-    maxforce = 0.2;
+    maxspeed = 50;
+    maxforce = 10.0f;
 	
 	age=0;
 	isDead= false;
 	maxAge=50;
-
-	size.set(50, 20);
 }
 
 //Definition of the superclass Boid constructor with given parameters for the position
@@ -23,13 +21,11 @@ Boid::Boid(int x, int y)
 
 	acc.set(0,0);
 
-    maxspeed = 4;
-    maxforce = 0.2;
+    maxspeed = 10;
+    maxforce = 5.0;
 	age=0;
 	isDead=false;
 	maxAge=50;
-
-	size.set(50, 20);
 }
 
 
@@ -43,21 +39,21 @@ void Boid::updateBoid(vector<ofPtr<Boid>> boids)
 	// Screen edge avoiding
 	if (getPosition().x > (ofGetWidth() - 100))
 	{
-		acc += ofVec2f(-1, 0) * 3.0f;
+		acc += ofVec2f(-1, 0) * 5.0f;
 	}
 	if (getPosition().x < 100)
 	{
-		acc += ofVec2f(1, 0) * 3.0f;
+		acc += ofVec2f(1, 0) * 5.0f;
 	}
 	if (getPosition().y > (ofGetHeight() - 100))
 	{
-		acc += ofVec2f(0, -1) * 12.0f;
+		acc += ofVec2f(0, -1) * 5.0f;
 	}
 
 	// Avoid surface
-	if (getPosition().y > (ofGetHeight() * 0.5f) || getPosition().y < (ofGetHeight() * 0.5f - 100))
+	if (getPosition().y > (ofGetHeight() * 0.5f) && getPosition().y < (ofGetHeight() * 0.5f + 100))
 	{
-		acc += ofVec2f(0, 1) * 12.0f;
+		acc += ofVec2f(0, 1) * 0;
 	}
 
 	if (getPosition().y > ofGetScreenHeight() || getPosition().y < 0 
@@ -75,15 +71,15 @@ void Boid::updateBoid(vector<ofPtr<Boid>> boids)
 }
 
 //definition of the superclass Boid method to seek for another Boid boids
-void Boid::seek(ofVec2f target)
+void Boid::seek(ofVec2f target, float force)
 {
-    acc += steer(target, false);
+    acc += steer(target, false)*force;
 }
 
 //definition of the superclass Boid method to avoid an enemy
-void Boid::avoid(ofVec2f target)
+void Boid::avoid(ofVec2f target, float force)
 {
-    acc -= steer(target, false);
+    acc -= steer(target, false)*force;
 }
 
 // Definition of the superclass Boid method to swim to another Boid boids
@@ -142,9 +138,9 @@ void Boid::flock(vector<ofPtr<Boid>> boids)
     ofVec2f coh = cohesion(boids);
 
     // Arbitrarily weight of the forces
-    sep *= 100.0f;
-    ali *= 100.0f;
-    coh *= 100.0f;
+    sep *= 5.0;
+    ali *= 3.0f;
+    coh *= 3.0f;
 
     acc += sep + ali + coh;     // acceleration value
 }

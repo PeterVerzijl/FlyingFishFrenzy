@@ -5,14 +5,15 @@
 class FishTwo :	public Boid
 {
 public:
-	// Constructor
-	FishTwo(void);
 	// Constructor with given parameters for position
 	FishTwo(int x, int y);
 	// Destructor
 	~FishTwo(void);
 
 	ofImage image;
+
+	float angle;
+	float targetAngle;
 
 	void draw();
 
