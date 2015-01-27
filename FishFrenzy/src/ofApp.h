@@ -32,6 +32,7 @@ class ofApp : public ofBaseApp{
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
 		
+	private:
 		// Kinect parameters
 		ofxKinect kinect;
 		float kinectAngle;

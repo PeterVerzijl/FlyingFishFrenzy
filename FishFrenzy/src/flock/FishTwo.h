@@ -9,15 +9,11 @@ public:
 	FishTwo(int x, int y);
 	// Destructor
 	~FishTwo(void);
-
-	ofImage image;
-
-	float angle;
-	float targetAngle;
-
 	void draw();
 
-protected:
 private:
+	ofImage image;
+	float angle;
+	float targetAngle;
 };
 

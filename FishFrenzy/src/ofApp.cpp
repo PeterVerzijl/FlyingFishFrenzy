@@ -1,7 +1,9 @@
 ///////////////////////////////////////////////////////
 ///// Programming with Structures Module 6 CreaTe /////
 /////  Created by Peter Verzijl and Gege Zhang    /////
-/////                  2015                       /////
+/////                    2015                     /////
+/////         Flocking based on flocking		  /////
+/////     created by Jeffrey Crouse on 3/30/10    /////
 ///////////////////////////////////////////////////////
 
 #include "ofApp.h"

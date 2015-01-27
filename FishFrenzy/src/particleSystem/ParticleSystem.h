@@ -10,7 +10,6 @@ class ParticleSystem
 public:
 	ParticleSystem();
 	~ParticleSystem();
-
 	void emit();
 	void update();
 

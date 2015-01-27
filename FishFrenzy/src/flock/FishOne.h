@@ -9,11 +9,9 @@ public:
 	~FishOne(void);
 	void draw();
 
+private:
 	ofImage image;
 	int life;
 	float angle;
 	float targetAngle;
-
-protected:
-private:
 };
