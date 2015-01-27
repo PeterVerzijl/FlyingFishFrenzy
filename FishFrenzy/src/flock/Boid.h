@@ -19,7 +19,6 @@ public:
     void seek(ofVec2f target, float force);                      //function for searching the other Boid boids target
     void avoid(ofVec2f target, float force);                     //function for avoiding an enemy
     void arrive(ofVec2f target);                    //function for arrival to the target
-
     void flock(vector<ofPtr<Boid>> boids);          //function for flocking
 	void UpdateLife();
 
@@ -31,7 +30,6 @@ public:
 	
     float maxforce;
     float maxspeed;
-
 	int age;
 	int maxAge;
 	bool isDead;

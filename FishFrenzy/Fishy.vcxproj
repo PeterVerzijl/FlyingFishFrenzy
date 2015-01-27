@@ -171,6 +171,8 @@
     <ClCompile Include="..\..\..\addons\ofxBox2d\libs\triangle\del_impl.cpp" />
     <ClCompile Include="src\particleSystem\Particle.cpp" />
     <ClCompile Include="src\particleSystem\ParticleSystem.cpp" />
+    <ClCompile Include="src\PlayerOne.cpp" />
+    <ClCompile Include="src\PlayerTwo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\flock\Boid.h" />
@@ -356,6 +358,8 @@
     <ClInclude Include="..\..\..\addons\ofxBox2d\libs\triangle\triangle_impl.hpp" />
     <ClInclude Include="src\particleSystem\Particle.h" />
     <ClInclude Include="src\particleSystem\ParticleSystem.h" />
+    <ClInclude Include="src\PlayerOne.h" />
+    <ClInclude Include="src\PlayerTwo.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\libs\openFrameworksCompiled\project\vs\openframeworksLib.vcxproj">

@@ -7,13 +7,10 @@ public:
     FishOne(int x, int y);
 	// Destructor
 	~FishOne(void);
-	
-	ofImage image;
-
 	void draw();
 
+	ofImage image;
 	int life;
-
 	float angle;
 	float targetAngle;
 

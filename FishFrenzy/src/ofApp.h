@@ -9,6 +9,9 @@
 #include "flock\FishOne.h"
 #include "flock\FishTwo.h"
 
+#include "PlayerOne.h"
+#include "PlayerTwo.h"
+
 #include "particleSystem\ParticleSystem.h"
 
 class ofApp : public ofBaseApp{
@@ -36,7 +39,6 @@ class ofApp : public ofBaseApp{
 		// OpenCV parameters
 		ofxCvGrayscaleImage grayImage;
 		ofxCvContourFinder contourFinder;
-
 		bool useThreshold;
 		int nearThreshold;
 		int farThreshold;
@@ -46,22 +48,26 @@ class ofApp : public ofBaseApp{
 
 		// Box2D parameters
 		ofxBox2d box2d;
-		
+
+		// vectors of pointers of fishes
 		vector<ofPtr<Boid>> fishOneList;
 		vector<ofPtr<Boid>> fishTwoList;
 		
-		ofPtr<ofxBox2dRect> playerLeft;
-		ofPtr<ofxBox2dRect> playerRight;
+		//pointers of players
+		ofPtr<PlayerOne> playerLeft;
+		ofPtr<PlayerTwo> playerRight;
 
+		//playerposition vectors
 		ofVec2f playerOnePos;
 		ofVec2f playerTwoPos;
 
+		//particle system
 		vector<ofPtr<ParticleSystem>> particleSystems;
 
-		int screenShakeDuration;	// In frames
-
+		//load font
 		ofTrueTypeFont fightFont;
 
+		//pictures
 		ofImage background;
 		ofImage fishOneGore1;
 		ofImage fishOneGore2;
@@ -70,5 +76,6 @@ class ofApp : public ofBaseApp{
 		ofImage fishTwoGore2;
 		ofImage fishBones;
 
+		int screenShakeDuration;	// In frames
 		int fishKilled;
 };

@@ -250,6 +250,12 @@
     <ClCompile Include="src\particleSystem\Particle.cpp">
       <Filter>src\particleSystem</Filter>
     </ClCompile>
+    <ClCompile Include="src\PlayerOne.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PlayerTwo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -961,6 +967,12 @@
     </ClInclude>
     <ClInclude Include="src\particleSystem\ParticleSystem.h">
       <Filter>src\particleSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PlayerOne.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PlayerTwo.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

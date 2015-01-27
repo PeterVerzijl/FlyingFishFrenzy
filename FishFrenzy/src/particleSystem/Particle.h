@@ -19,10 +19,8 @@ public:
 	ofVec2f pos, vel, acc, gravity;
 	float maxspeed;
 	float angle;
-
 	int life;
 	bool dead;
-
 	ofImage image;
 };
 

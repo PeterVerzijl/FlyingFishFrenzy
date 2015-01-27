@@ -10,18 +10,20 @@
 void ofApp::setup(){
 
 	ofSetVerticalSync(true);			// Set graphics so it runs smoothly
-//	ofSetLogLevel(OF_LOG_NOTICE);		// Debug level
+	//ofSetLogLevel(OF_LOG_NOTICE);		// Debug level
+
+//----------------------------KINECT SETUP----------------------
 
 	kinect.setRegistration(true);		// Registrate depth checking
-
 	kinect.init(false, false);			// Disables video image (faster fps)
 	kinect.open();						// Opens first available kinect
-
 	kinectAngle = 10;					// Level kinect at startup
 	kinect.setCameraTiltAngle(kinectAngle);
-
 	// Populate and init image with correct image size
 	grayImage.allocate(kinect.width, kinect.height);
+	useThreshold = true;				// Tell openCV to use threshold values
+	nearThreshold = 255;				// Check as near as possible
+	farThreshold = 243;					// Optimal for fist tracking
 
 	// Load sound
 	explode.loadSound("explosion.wav");
@@ -30,34 +32,30 @@ void ofApp::setup(){
 	soundtrack.play();
 	naturesounds.play();
 
-
-	useThreshold = true;				// Tell openCV to use threshold values
-	nearThreshold = 255;				// Check as near as possible
-	farThreshold = 243;					// Optimal for fist tracking
-
 	// Set box2d parameters
 	box2d.init();
 	box2d.setGravity(0, 0);				// Set a vector2 for the gravity to 0 initially
 	box2d.createBounds();				// Create the bounds of the box2d world
 	box2d.setFPS(30.0);					// Set the physics update rate
 
+//----------------------------PLAYERS--------------------------
 	// Add two 'hands'
-		
 	// Player left
-	playerLeft = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
+	playerLeft = ofPtr<PlayerOne>(new PlayerOne);
 	playerLeft->setPhysics(3.0, 0.53, 0);
-	playerLeft->setup(box2d.getWorld(), ofGetWidth() * 0.25f, ofGetHeight() * 0.5f, 120, 50);
-	playerLeft->setFixedRotation(true);
-	playerLeft->fixture.filter.groupIndex = 1;													// Fixture collision mask
+	playerLeft->setup(box2d.getWorld(), ofGetWidth() * 0.25f, ofGetHeight() * 0.5f, 190, 21);
+//	playerLeft->setFixedRotation(true);
+	playerLeft->fixture.filter.groupIndex = 1;	// Fixture collision mask
 
 	// Player right
-	playerRight = ofPtr<ofxBox2dRect>(new ofxBox2dRect);
+	playerRight = ofPtr<PlayerTwo>(new PlayerTwo);
 	playerRight->setPhysics(3.0, 0.53, 0.1);
-	playerRight->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 120, 50);
-	playerRight->setFixedRotation(true);
-	playerRight->fixture.filter.groupIndex = 1;													// Fixture collision mask
+	playerRight->setup(box2d.getWorld(), ofGetWidth() * 0.75f, ofGetHeight() * 0.5f, 190, 21);
+//	playerRight->setFixedRotation(true);
+	playerRight->fixture.filter.groupIndex = 1;	// Fixture collision mask
 	b2Filter filter;
-	
+
+//----------------------------FISHES---------------------------
 	//generating new fishes (20) for both players
 	for (int i = 0; i < 20; i++)
 	{
@@ -74,12 +72,13 @@ void ofApp::setup(){
 		fishTwoList.push_back(fish2);
 	}
 
+//----------------------------FONT/IMAGES----------------------
 	// Fight font
 	fightFont.loadFont("FightFont.ttf", 20, false, false, false, 1.0);
-	
+
 	// Load background image
 	background.loadImage("Background.png");
-	
+
 	// Gore images
 	fishOneGore1.loadImage("FishPiece3.png");;
 	fishOneGore2.loadImage("FishPiece4.png");;
@@ -87,51 +86,49 @@ void ofApp::setup(){
 	fishTwoGore1.loadImage("FishPiece1.png");
 	fishTwoGore2.loadImage("FishPiece2.png");
 	fishBones.loadImage("Fishbone.png");
-
-	ofSetFrameRate(60);					// Try to keep the display framerate at 60fps
+	
+	//set framerate seeking 60fps
+	ofSetFrameRate(60);	
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 
+//----------------------------KINECT----------------------------
 	kinect.update();					// Update kinect first to get images
 
 	if (kinect.isFrameNew())			// Update code only when kinect has new data
 	{
-		// Load greyscale depth images
-		grayImage.setFromPixels(kinect.getDepthPixels(), kinect.width, kinect.height);
-		grayImage.resize(ofGetWidth(), ofGetHeight());	// Set the image so that it covers the whole screen
-		grayImage.mirror(false, true);	// For some reason the image is mirrored :S so we mirror it back!
-		
+		grayImage.setFromPixels(kinect.getDepthPixels(), kinect.width, kinect.height);		// Load greyscale depth images
+		grayImage.resize(ofGetWidth(), ofGetHeight());										// Set the image so that it covers the whole screen
+		grayImage.mirror(false, true);														// For some reason the image is mirrored :S so we mirror it back!
+
 		// Do treshold!
 		unsigned char *pixels = grayImage.getPixels();
 		int numPixels = grayImage.getWidth() * grayImage.getHeight();
 		for (int i = 0; i < numPixels; i++)
 		{
-			// Change the pixels to white and black so we can see them better later
-			pixels[i] = (pixels[i] < nearThreshold && pixels[i] > farThreshold) ? 255 : 0;
+			pixels[i] = (pixels[i] < nearThreshold && pixels[i] > farThreshold) ? 255 : 0;	// Change the pixels to white and black so we can see them better later
 		}
-
-		grayImage.flagImageChanged();	// Tells open CV that the image was updated
-
-		// Find contours
-		contourFinder.findContours(grayImage, 30, (kinect.width * kinect.height) * 0.5f, 20, false); 
+		grayImage.flagImageChanged();														// Tells open CV that the image was updated
+		contourFinder.findContours(grayImage, 30, (kinect.width * kinect.height) * 0.5f, 20, false); // Find contours
 	}
 
-	// Now we have the blobs from findContours, iterate trough them
+//----------------------------BLOBFINDER-----------------------
+// Now we have the blobs from findContours, iterate trough them
 	for (int i = 0; i < contourFinder.blobs.size(); i++) 
 	{
 		ofxCvBlob blob = contourFinder.blobs.at(i);
 		ofVec2f blobPos = ofVec2f(blob.centroid.x, blob.centroid.y);
-		
-		if (blobPos.x < ofGetWidth() * 0.5f) 
+
+		if (blobPos.x < ofGetWidth() * 0.5f)												//find blob on left side
 		{
 			float distance = playerLeft->getPosition().distance(blobPos);
 			ofVec2f force = (blobPos - playerLeft->getPosition()).normalized();
 			playerLeft->setVelocity(force * 0.1f * distance);
 			playerOnePos = blobPos;
 		}
-		else
+		else																				//find blob on right side
 		{
 			float distance = playerRight->getPosition().distance(blobPos);
 			ofVec2f force = (blobPos - playerRight->getPosition()).normalized();
@@ -140,19 +137,20 @@ void ofApp::update(){
 		}
 	}
 
-	// Update movement of fishes 1
+//--------------------------FISH-MOVEMENT-UPDATE----------------
+	//update movement of fish 1
 	for (int i = 0; i < fishOneList.size(); i++) 
 	{
 		ofPtr<Boid> boid = fishOneList.at(i);
-		
-		boid->avoid(playerTwoPos, 5.0f);
-		boid->seek(playerOnePos, 5.0f);
+
+		boid->avoid(playerTwoPos, 1.0f);
+		boid->seek(playerOnePos, 1.0f);
 		boid->updateBoid(fishOneList);
-		
+
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
 		{
 			boid->acc += ofVec2f(0, 1) * 50.0f;
-			boid->UpdateLife();									// run update life (lifespan --)
+			boid->UpdateLife();										// run update life (lifespan --)
 		}
 		else
 		{
@@ -162,18 +160,18 @@ void ofApp::update(){
 
 		if (boid->isDead)
 		{
-			fishOneList.erase(fishOneList.begin() + i);				// erase that fish
+			fishOneList.erase(fishOneList.begin() + i);				// if the fish is dead - erase that fish
 			explode.play();
 
 			// Create particle system
-			ofPtr<ParticleSystem> ps = ofPtr<ParticleSystem>(new ParticleSystem);			// Create new particle system
-			ofPtr<Particle> p;									// Create 20 new particles
+			ofPtr<ParticleSystem> ps = ofPtr<ParticleSystem>(new ParticleSystem);	// Create new particle system
+			ofPtr<Particle> p;														// Create 20 new particles
 			for (int i = 0; i < 20; i++)
 			{
 				p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y));
-				ps->particles.push_back(p);						// Add to the list
+				ps->particles.push_back(p);											// Add to the list
 			}
-			// Add gore
+			// Add gore (blood, fish pieces etc.)
 			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishOneGore1));
 			ps->particles.push_back(p);
 			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishOneGore2));
@@ -184,7 +182,7 @@ void ofApp::update(){
 			ps->particles.push_back(p);
 
 			ps->emit();
-			particleSystems.push_back(ps);						// Add particle sytem to our ps list
+			particleSystems.push_back(ps);											// Add particle sytem to our ps list
 
 			// Do screenshake
 			screenShakeDuration = 10;
@@ -195,11 +193,10 @@ void ofApp::update(){
 	for (int i = 0; i < fishTwoList.size(); i++) 
 	{
 		ofPtr<Boid> boid = fishTwoList.at(i);
-
-		boid->avoid(playerOnePos, 5.0f);
-		boid->seek(playerTwoPos, 5.0f);
+		boid->avoid(playerOnePos, 1.0f);
+		boid->seek(playerTwoPos, 1.0f);
 		boid->updateBoid(fishTwoList);
-		
+
 		if (boid->getPosition().y < ofGetHeight() * 0.5f)
 		{
 			boid->acc += ofVec2f(0, 1) * 50.0f;
@@ -213,16 +210,16 @@ void ofApp::update(){
 
 		if (boid->isDead)
 		{
-			fishTwoList.erase(fishTwoList.begin() + i);				// erase that fish
+			fishTwoList.erase(fishTwoList.begin() + i);			// erase that fish
 			explode.play();
 
 			// Create particle system
-			ofPtr<ParticleSystem> ps = ofPtr<ParticleSystem>(new ParticleSystem);			// Create new particle system
-			ofPtr<Particle> p;									// Create 20 new particles
+			ofPtr<ParticleSystem> ps = ofPtr<ParticleSystem>(new ParticleSystem);	// Create new particle system
+			ofPtr<Particle> p;														// Create 20 new particles
 			for (int i = 0; i < 20; i++)
 			{
 				p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y));
-				ps->particles.push_back(p);						// Add to the list
+				ps->particles.push_back(p);											// Add to the list
 			}
 			// Add gore
 			p = ofPtr<Particle>(new Particle(boid->getPosition().x, boid->getPosition().y, fishTwoGore1));
@@ -246,56 +243,57 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
+//---------------------------SCREENSHAKE------------------------
 	ofPushMatrix();
-		// Screenshake
-		if (screenShakeDuration > 0)
-		{
-			screenShakeDuration--;
-			ofTranslate(ofPoint(ofRandom(-1, 1), ofRandom(-1, 1)) * 10 );
-		}
-		else 
-		{
-			ofTranslate(0, 0);
-		}
 
-		ofSetColor(255);
-		background.draw(0, 0, ofGetWidth(), ofGetHeight());
+	if (screenShakeDuration > 0)										// Screenshake
+	{
+		screenShakeDuration--;
+		ofTranslate(ofPoint(ofRandom(-1, 1), ofRandom(-1, 1)) * 10 );	//random translation / shake
+	}
+	else 
+	{
+		ofTranslate(0, 0);
+	}
 
-		// ofSetColor(150, 50);											// Set default background color a nice shade of gray
-		// grayImage.draw(0, 0, grayImage.width, grayImage.height);		// Draw threshold image
+	ofSetColor(255);
+	background.draw(0, 0, ofGetWidth(), ofGetHeight());
 
-		// Draw players
-		ofFill();
-		ofSetColor(0, 0, 255);
-		playerLeft->draw();
-		ofSetColor(255, 0, 0);
-		playerRight->draw();
+	// ofSetColor(150, 50);											// Set default background color a nice shade of gray
+	// grayImage.draw(0, 0, grayImage.width, grayImage.height);		// Draw threshold image
 
-		// Draw box2D
-		ofSetColor(255, 255, 255);
-		for (int i = 0; i < fishOneList.size(); i++) 
-		{
-			fishOneList.at(i)->draw();
-		}
-		for (int i = 0; i < fishTwoList.size(); i++) 
-		{
-			fishTwoList.at(i)->draw();
-		}
+//----------------------------DRAW-STUFF------------------------
+	// Draw players
+	ofFill();
+	ofSetColor(0, 0, 255);
+	playerLeft->draw();
+	ofSetColor(255, 0, 0);
+	playerRight->draw();
 
-		// Draw particles
-		for (ofPtr<ParticleSystem> ps : particleSystems) 
-		{
-			ps->update();
-		}
-		
-		// Draw water
-		fishKilled = (float)(((float)fishOneList.size() + (float)fishTwoList.size()) / 40.0f) * 255;
-		ofSetColor(255 - fishKilled, 0, fishKilled, 150); 
-		ofRect(0, ofGetHeight() * 0.5f, ofGetWidth(), ofGetHeight() * 0.5f);
+	// Draw fishes
+	ofSetColor(255, 255, 255);
+	for (int i = 0; i < fishOneList.size(); i++) 
+	{
+		fishOneList.at(i)->draw();
+	}
+	for (int i = 0; i < fishTwoList.size(); i++) 
+	{
+		fishTwoList.at(i)->draw();
+	}
 
-		ofNoFill();
-		ofRect(100, 100, ofGetWidth() - 200, ofGetHeight() - 200);
+	// Draw particles
+	for (ofPtr<ParticleSystem> ps : particleSystems) 
+	{
+		ps->update();
+	}
+
+	// Draw water
+	fishKilled = (float)(((float)fishOneList.size() + (float)fishTwoList.size()) / 40.0f) * 255;
+	ofSetColor(255 - fishKilled, 0, fishKilled, 150); 
+	ofRect(0, ofGetHeight() * 0.5f, ofGetWidth(), ofGetHeight() * 0.5f);
+
+	ofNoFill();
+	ofRect(100, 100, ofGetWidth() - 200, ofGetHeight() - 200);
 
 	ofPopMatrix();
 
@@ -303,8 +301,7 @@ void ofApp::draw(){
 
 	// UI counters
 	ofDrawBitmapString(ofToString(ofGetFrameRate())+"fps", 10,15);
-	
-	ofSetColor(255, 255, 0);
+	ofSetColor(255, 255, 255);
 	ostringstream p1text;
 	p1text << "Player 1: " << fishOneList.size() << " / 20";
 	ostringstream p2text;
@@ -314,12 +311,12 @@ void ofApp::draw(){
 
 	if (fishTwoList.size() <= 0) {
 		ostringstream text;
-		text << "Player one is a weaner!" << endl;
+		text << "Player one WON!" << endl;
 		fightFont.drawString(text.str(), ofGetWidth() * 0.3f, ofGetHeight() * 0.5f);
 	} 
 	else if (fishOneList.size() <= 0) {
 		ostringstream text;
-		text << "Player two is a weaner!" << endl;
+		text << "Player two WON!" << endl;
 		fightFont.drawString(text.str(), ofGetWidth() * 0.3f, ofGetHeight() * 0.5f);
 	}
 }
@@ -358,7 +355,7 @@ void ofApp::mouseDragged(int x, int y, int button)
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button)
 {
-	
+
 }
 
 //--------------------------------------------------------------
