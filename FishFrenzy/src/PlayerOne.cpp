@@ -1,3 +1,9 @@
+/*
+	Player One is the first player that is drawn on the screen.
+	A player is a baseball bat image that is derived from ofxBox2DRect
+	The player position is changed in ofApp.cpp since it follows an OpenCV blob.
+*/
+
 #include "PlayerOne.h"
 
 PlayerOne::PlayerOne(void)

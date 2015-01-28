@@ -1,3 +1,9 @@
+/*
+	Fish one is derived from the boid class and thus the ofxBox2DRect class.
+	Fishes add graphics to the boids, namely an image of a fish.
+	The fish rotates (with linear interpolation) towards it's moving direction.
+*/
+
 #include "FishOne.h"
 
 FishOne::FishOne(int x, int y) 

@@ -1,3 +1,12 @@
+/*
+	Particle is the base class for all particles.
+	A particle has phisics which can be changed by adding force.
+	All particles also have gravity and a life parameter.
+	The life parameter depleates each frame. Once life is 0 it will be destroyed.
+	A particle can either be an image, if not, it is a simple red circle.
+	The transparancy of the image is changed by life.
+*/
+
 #include "Particle.h"
 
 Particle::Particle()

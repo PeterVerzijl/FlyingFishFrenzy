@@ -1,3 +1,15 @@
+/*
+	Boid is the base class for boids as they follow the,
+	Boids flocking algorythem. 
+	The  boid algorithem is itself derived from ofxBox2DRect for physics.
+	They seek, avoid, sepearate, coheed and align.
+	In the update the function flock (which manages the above mentioned) is called.
+	The update also manages the avoidance of the window borders and the surface of the water.
+	They hate water surfaces since air kills them.
+	Update Life adds age to the fish if it is above the water, if age is too large,
+	the fish will destroy itself.
+*/
+
 #include "boid.h"
 
 // Definition of the superclass Boid constructor

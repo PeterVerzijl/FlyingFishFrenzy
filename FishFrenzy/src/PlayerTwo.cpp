@@ -1,5 +1,10 @@
-#include "PlayerTwo.h"
+/*
+	Player Two is the second player that is drawn on the screen.
+	A player is a baseball bat image that is derived from ofxBox2DRect
+	The player position is changed in ofApp.cpp since it follows an OpenCV blob.
+*/
 
+#include "PlayerTwo.h"
 
 PlayerTwo::PlayerTwo(void)
 {
