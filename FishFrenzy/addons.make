@@ -1,3 +1,3 @@
+ofxBox2d
 ofxKinect
 ofxOpenCv
-ofxBox2d

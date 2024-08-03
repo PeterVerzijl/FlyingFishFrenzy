@@ -101,12 +101,12 @@ void ofApp::update(){
 
 	if (kinect.isFrameNew())			// Update code only when kinect has new data
 	{
-		grayImage.setFromPixels(kinect.getDepthPixels(), kinect.width, kinect.height);		// Load greyscale depth images
+		grayImage.setFromPixels(kinect.getDepthPixels().begin(), kinect.width, kinect.height);		// Load greyscale depth images
 		grayImage.resize(ofGetWidth(), ofGetHeight());										// Set the image so that it covers the whole screen
 		grayImage.mirror(false, true);														// For some reason the image is mirrored :S so we mirror it back!
 
 		// Do treshold!
-		unsigned char *pixels = grayImage.getPixels();
+		unsigned char *pixels = grayImage.getPixels().begin();
 		int numPixels = grayImage.getWidth() * grayImage.getHeight();
 		for (int i = 0; i < numPixels; i++)
 		{

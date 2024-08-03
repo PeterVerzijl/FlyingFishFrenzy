@@ -17,7 +17,7 @@ void ofxFlocking::update()
 {
     for(int i=0; i<boids.size(); i++)
     {
-        boids[i]->update(boids);
+        boids[i]->updateBoid(boids);
     }
 }
 
@@ -33,8 +33,8 @@ void ofxFlocking::draw()
 //function which creates a new boid
 void ofxFlocking::addBoid()
 {
-    boids.push_back(ofPtr<FishOne>(new FishOne));
-    boids.push_back(ofPtr<FishTwo>(new FishTwo));
+    boids.push_back(ofPtr<FishOne>(new FishOne(0, 0)));
+    boids.push_back(ofPtr<FishTwo>(new FishTwo(0, 0)));
 }
 
 //function which created a new boid with given parameters for the position
